@@ -35,4 +35,8 @@
     <string name="description">Deskripsi</string>
     <string name="upload">Unggah</string>
     <string name="language">Bahasa</string>
+    <string name="retry">Coba lagi</string>
+    <string name="title_activity_maps">Story Map</string>
+    <string name="menu_map">Map View</string>
+    <string name="menu_list">Stories View</string>
 </resources>

@@ -35,4 +35,9 @@
     <string name="description">Description</string>
     <string name="upload">Upload</string>
     <string name="language">Language</string>
+    <string name="retry">Try Again</string>
+    <string name="title_activity_maps">Story Map</string>
+    <string name="menu_map">Map View</string>
+    <string name="menu_list">Stories View</string>
+    <string name="image">image</string>
 </resources>

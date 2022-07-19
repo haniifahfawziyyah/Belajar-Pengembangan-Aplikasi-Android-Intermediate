@@ -2,16 +2,14 @@ package com.haniifah.submission.storyapp.view.main
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.MenuItem
 import androidx.appcompat.app.ActionBar
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.haniifah.submission.storyapp.databinding.ActivityDetailStoryBinding
-import com.haniifah.submission.storyapp.model.Story
+import com.haniifah.submission.storyapp.model.ListStoryItem
 
 class DetailStoryActivity : AppCompatActivity() {
-
-    companion object {
-        const val DETAIL_STORY = "detail_story"
-    }
 
     private lateinit var binding: ActivityDetailStoryBinding
 
@@ -20,17 +18,20 @@ class DetailStoryActivity : AppCompatActivity() {
         binding = ActivityDetailStoryBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val story = intent.getParcelableExtra<Story>(DETAIL_STORY) as Story
-        Glide.with(this)
-            .load(story.photo)
+        val story = intent.getParcelableExtra<ListStoryItem>("Story") as ListStoryItem
+        Glide.with(applicationContext)
+            .load(story.photoUrl)
+            .apply(RequestOptions())
             .into(binding.imageStoryDetail)
-        binding.tvUsernameDetail.text = story.user
+        binding.tvUsernameDetail.text = story.name
         binding.tvDescriptionDetail.text = story.description
+
         binding.apply {
             if (supportActionBar != null) {
-                (supportActionBar as ActionBar).title = story.user
+                (supportActionBar as ActionBar).title = story.name
             }
             supportActionBar?.setDisplayShowTitleEnabled(true)
+            supportActionBar?.setDisplayHomeAsUpEnabled(true)
         }
     }
 
@@ -38,4 +39,5 @@ class DetailStoryActivity : AppCompatActivity() {
         onBackPressed()
         return true
     }
+
 }

@@ -2,6 +2,7 @@ package com.haniifah.submission.storyapp.view.login
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -32,12 +33,9 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 
 class LoginActivity : AppCompatActivity() {
 
-    companion object {
-        private const val TAG = "Login Activity"
-    }
-
     private lateinit var loginViewModel: LoginViewModel
     private lateinit var binding: ActivityLoginBinding
+    private lateinit var user: User
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,7 +48,7 @@ class LoginActivity : AppCompatActivity() {
         binding.loginButton.setOnClickListener {
             val email = binding.emailEditText.text.toString()
             val password = binding.passwordEditText.text.toString()
-            setupAction(email, password)
+            login(email, password)
         }
         setupView()
         setupViewModel()
@@ -65,7 +63,7 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupAction(email: String, password: String) {
+    private fun login(email: String, password: String) {
         showLoading(true)
 
         val client = ApiConfig.getApiService().login(email, password)
@@ -74,11 +72,13 @@ class LoginActivity : AppCompatActivity() {
                 showLoading(false)
                 val responseBody = response.body()
                 Log.d(TAG, "onResponse: $responseBody")
+
                 if(response.isSuccessful && responseBody?.message == "success") {
-                    loginViewModel.saveUser(User(responseBody.loginResult.token, true))
+                    loginViewModel.saveUser(User(responseBody.loginResult.name,responseBody.loginResult.token, true))
                     Toast.makeText(this@LoginActivity, getString(R.string.login_success), Toast.LENGTH_SHORT).show()
                     val intent = Intent(this@LoginActivity, MainActivity::class.java)
                     startActivity(intent)
+                    finish()
                 } else {
                     Log.e(TAG, "onFailure1: ${response.message()}")
                     Toast.makeText(this@LoginActivity, getString(R.string.login_fail), Toast.LENGTH_SHORT).show()
@@ -90,7 +90,6 @@ class LoginActivity : AppCompatActivity() {
                 Log.e(TAG, "onFailure2: ${t.message}")
                 Toast.makeText(this@LoginActivity, getString(R.string.login_fail), Toast.LENGTH_SHORT).show()
             }
-
         })
     }
 
@@ -114,11 +113,7 @@ class LoginActivity : AppCompatActivity() {
         )[LoginViewModel::class.java]
 
         loginViewModel.getUser().observe(this) { user ->
-            if (user.isLogin) {
-                val intent = Intent(this, MainActivity::class.java)
-                startActivity(intent)
-                finish()
-            }
+            this.user = user
         }
 
     }

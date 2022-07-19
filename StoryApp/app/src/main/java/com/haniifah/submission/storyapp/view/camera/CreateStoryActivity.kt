@@ -1,13 +1,15 @@
 package com.haniifah.submission.storyapp.view.camera
 
-import android.Manifest
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -22,6 +24,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.haniifah.submission.storyapp.R
 import com.haniifah.submission.storyapp.api.ApiConfig
 import com.haniifah.submission.storyapp.databinding.ActivityCreateStoryBinding
+import com.haniifah.submission.storyapp.di.CompanionObject.CAMERA_X_RESULT
+import com.haniifah.submission.storyapp.di.CompanionObject.REQUEST_CODE_PERMISSIONS
+import com.haniifah.submission.storyapp.di.CompanionObject.REQUIRED_PERMISSIONS
 import com.haniifah.submission.storyapp.model.FileUploadResponse
 import com.haniifah.submission.storyapp.model.UserPreference
 import com.haniifah.submission.storyapp.view.ViewModelFactory
@@ -34,19 +39,12 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 class CreateStoryActivity : AppCompatActivity() {
-
-    companion object {
-        const val TAG = "CreateStoryActivity"
-        const val CAMERA_X_RESULT = 200
-
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-        private const val REQUEST_CODE_PERMISSIONS = 10
-    }
 
     private lateinit var createStoryViewModel: CreateStoryViewModel
     private lateinit var binding: ActivityCreateStoryBinding
@@ -62,6 +60,7 @@ class CreateStoryActivity : AppCompatActivity() {
             (supportActionBar as ActionBar).title = "New Story"
         }
         supportActionBar?.setDisplayShowTitleEnabled(true)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         setupViewModel()
 
@@ -76,11 +75,6 @@ class CreateStoryActivity : AppCompatActivity() {
         binding.btnCamera.setOnClickListener { startCameraX() }
         binding.btnGallery.setOnClickListener { startGallery() }
         binding.btnUpload.setOnClickListener { uploadImage() }
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return true
     }
 
     private fun setupViewModel() {
@@ -131,12 +125,13 @@ class CreateStoryActivity : AppCompatActivity() {
         if (it.resultCode == CAMERA_X_RESULT) {
             val myFile = it.data?.getSerializableExtra("picture") as File
             val isBackCamera = it.data?.getBooleanExtra("isBackCamera", true) as Boolean
+            val result = rotateBitmap(BitmapFactory.decodeFile(myFile.path), isBackCamera)
 
-            getFile = myFile
-            val result = rotateBitmap(
-                BitmapFactory.decodeFile(getFile?.path),
-                isBackCamera
-            )
+            val bytes = ByteArrayOutputStream()
+            result.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
+            val path = MediaStore.Images.Media.insertImage(this@CreateStoryActivity.contentResolver, result, "Title", null)
+            val uri = Uri.parse(path.toString())
+            getFile = uriToFile(uri, this@CreateStoryActivity)
 
             binding.imgPreview.setImageBitmap(result)
         }
@@ -168,7 +163,6 @@ class CreateStoryActivity : AppCompatActivity() {
         showLoading(true)
         if (getFile != null) {
             val file = reduceFileImage(getFile as File)
-
             val description = binding.etDescription.text.toString().toRequestBody("text/plain".toMediaType())
             val requestImageFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
             val imageMultipart: MultipartBody.Part = MultipartBody.Part.createFormData(
@@ -179,16 +173,20 @@ class CreateStoryActivity : AppCompatActivity() {
 
             createStoryViewModel.getUser().observe(this) {
                 if (it != null) {
+
                     val client = ApiConfig.getApiService()
                         .uploadImage("Bearer " + it.token, imageMultipart, description)
                     client.enqueue(object : Callback<FileUploadResponse> {
+
                         override fun onResponse(
                             call: Call<FileUploadResponse>,
                             response: Response<FileUploadResponse>
                         ) {
                             showLoading(false)
+
                             val responseBody = response.body()
                             Log.d(TAG, "onResponse: $responseBody")
+
                             if (response.isSuccessful && responseBody?.message == "Story created successfully") {
                                 Toast.makeText(this@CreateStoryActivity,
                                     getString(R.string.upload_success),
@@ -217,5 +215,10 @@ class CreateStoryActivity : AppCompatActivity() {
             }
         }
         else showLoading(false)
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
     }
 }

@@ -2,7 +2,7 @@ package com.haniifah.submission.storyapp.view.signup
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
-import android.content.Context
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -12,31 +12,18 @@ import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
 import android.widget.Toast
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStore
-import androidx.lifecycle.ViewModelProvider
 import com.haniifah.submission.storyapp.R
 import com.haniifah.submission.storyapp.api.ApiConfig
 import com.haniifah.submission.storyapp.databinding.ActivitySignupBinding
 import com.haniifah.submission.storyapp.model.SignupResponse
-import com.haniifah.submission.storyapp.model.UserPreference
-import com.haniifah.submission.storyapp.view.ViewModelFactory
 import com.haniifah.submission.storyapp.view.login.LoginActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
-
 class SignupActivity : AppCompatActivity() {
 
-    companion object {
-        private const val TAG = "Register"
-    }
-
     private lateinit var binding: ActivitySignupBinding
-    private lateinit var signupViewModel: SignupViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,7 +43,6 @@ class SignupActivity : AppCompatActivity() {
         }
 
         setupView()
-        setupViewModel()
         playAnimation()
     }
 
@@ -81,14 +67,6 @@ class SignupActivity : AppCompatActivity() {
         supportActionBar?.hide()
     }
 
-    private fun setupViewModel() {
-        signupViewModel = ViewModelProvider(
-            this,
-            ViewModelFactory(UserPreference.getInstance(dataStore))
-        )[SignupViewModel::class.java]
-    }
-
-
     private fun setupAction(name: String, email: String, password: String) {
         showLoading(true)
 
@@ -105,6 +83,7 @@ class SignupActivity : AppCompatActivity() {
                     Toast.makeText(this@SignupActivity, getString(R.string.register_success), Toast.LENGTH_SHORT).show()
                     val intent = Intent(this@SignupActivity, LoginActivity::class.java)
                     startActivity(intent)
+                    finish()
                 } else {
                     Log.e(TAG, "onFailure1: ${response.message()}")
                     Toast.makeText(this@SignupActivity, getString(R.string.register_fail), Toast.LENGTH_SHORT).show()

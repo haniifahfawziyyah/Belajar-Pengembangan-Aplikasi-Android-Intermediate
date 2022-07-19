@@ -15,6 +15,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import com.haniifah.submission.storyapp.R
 import com.haniifah.submission.storyapp.databinding.ActivityCameraBinding
+import com.haniifah.submission.storyapp.di.CompanionObject.CAMERA_X_RESULT
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -77,7 +78,7 @@ class CameraActivity : AppCompatActivity() {
                         getString(R.string.back_cam),
                         cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA
                     )
-                    setResult(CreateStoryActivity.CAMERA_X_RESULT, intent)
+                    setResult(CAMERA_X_RESULT, intent)
                     finish()
                 }
             }
